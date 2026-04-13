@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Наш Город - Помощник по категориям</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .chat-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 75%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .bot .message-content {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .options-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .option-btn {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .option-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .category-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            margin-top: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .category-card:hover {
+            transform: translateX(5px);
+        }
+
+        .category-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .category-desc {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .recommendation {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .recommendation-title {
+            color: #2e7d32;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input:focus {
+            border-color: #667eea;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .message-content {
+                max-width: 85%;
+            }
+            
+            .options-buttons {
+                gap: 5px;
+            }
+            
+            .option-btn {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>🏙️ Наш Город - Помощник</h1>
+            <p>Помогу определить правильную категорию для вашего обращения</p>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-content">
+                    👋 Здравствуйте! Я помогу вам выбрать правильную категорию для обращения в портал "Наш город".<br><br>
+                    📝 <strong>Как я работаю:</strong><br>
+                    1. Вы описываете свою проблему<br>
+                    2. Я задаю уточняющие вопросы<br>
+                    3. Рекомендую наиболее подходящую категорию<br><br>
+                    Готовы начать?
+                    <div class="options-buttons">
+                        <button class="option-btn" onclick="startNewAppeal()">✅ Начать новое обращение</button>
+                        <button class="option-btn" onclick="showAllCategories()">📂 Посмотреть все категории</button>
+                        <button class="option-btn" onclick="showExamples()">📋 Примеры обращений</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="messageInput" placeholder="Опишите вашу проблему..." onkeypress="handleKeyPress(event)">
+            <button class="send-btn" onclick="sendMessage()">Отправить</button>
+        </div>
+    </div>
+
+    <script>
+        // База знаний категорий
+        const CATEGORIES = {
+            "Дороги и тротуары": {
+                keywords: ["яма", "выбоина", "дорога", "асфальт", "тротуар", "бордюр", "разбитая дорога", "колейность", "люк", "неровность"],
+                questions: ["Где именно проблема: на проезжей части или тротуаре?", "Какой размер повреждения?", "Опасно ли это для движения?"],
+                description: "Ямы на дорогах, разрушенный асфальт, поврежденные тротуары, проблемы с бордюрами"
+            },
+            "Мусор и контейнерные площадки": {
+                keywords: ["мусор", "свалка", "контейнер", "помойка", "отходы", "несанкционированная свалка", "переполнен", "бак"],
+                questions: ["Где находится проблема?", "Переполнены ли контейнеры?", "Есть ли запах или антисанитария?"],
+                description: "Переполненные контейнеры, несанкционированные свалки, загрязнение территории"
+            },
+            "Освещение": {
+                keywords: ["свет", "фонарь", "освещение", "темно", "лампа", "столб", "не горит", "тускло"],
+                questions: ["Сколько фонарей не работает?", "Как давно проблема?", "Опасно ли передвигаться в темноте?"],
+                description: "Неисправные фонари, отсутствие освещения, тусклый свет на улицах и во дворах"
+            },
+            "ЖКХ (отопление, вода)": {
+                keywords: ["отопление", "батарея", "холодно", "горячая вода", "холодная вода", "труба", "протечка", "ржавая вода"],
+                questions: ["Какая именно проблема: с водой или отоплением?", "Как долго продолжается?", "Есть ли авария?"],
+                description: "Проблемы с отоплением, перебои с водой, протечки, низкое давление"
+            },
+            "Озеленение и парки": {
+                keywords: ["дерево", "газон", "парк", "сквер", "куст", "сухостой", "порубо", "цветник", "зеленые насаждения"],
+                questions: ["Что именно с зелеными насаждениями?", "Есть ли угроза безопасности?", "Это в парке или во дворе?"],
+                description: "Аварийные деревья, неухоженные газоны, проблемы в парках и скверах"
+            },
+            "Транспорт и остановки": {
+                keywords: ["автобус", "остановка", "маршрутка", "расписание", "павильон", "транспорт", "общественный транспорт"],
+                questions: ["Какая проблема с транспортом или остановкой?", "Какой маршрут?", "Есть ли угроза безопасности?"],
+                description: "Проблемы с остановками, расписанием, павильонами, работой транспорта"
+            },
+            "Шум и соседи": {
+                keywords: ["шум", "громко", "музыка", "стройка ночью", "собака лает", "соседи", "тишина", "покой"],
+                questions: ["В какое время суток шум?", "Какой характер шума?", "Как долго продолжается?"],
+                description: "Нарушение тишины, шумные соседи, строительные работы в неположенное время"
+            },
+            "Ремонт подъездов": {
+                keywords: ["подъезд", "лестница", "перила", "стена", "потолок", "грязно", "разбито", "лифт"],
+                questions: ["Что именно требует ремонта?", "Как давно проблема?", "Есть ли угроза безопасности?"],
+                description: "Разрушенная отделка подъезда, неисправные перила, грязь, проблемы с лифтами"
+            },
+            "Парковки": {
+                keywords: ["парковка", "парковочное место", "припаркован", "авто", "машина", "заезд", "газон"],
+                questions: ["Где проблема с парковкой?", "Мешает ли проезду?", "Есть ли разметка?"],
+                description: "Незаконная парковка, отсутствие мест, парковка на газонах"
+            },
+            "Животные": {
+                keywords: ["собака", "кошка", "бездомное животное", "бродячий", "стаи", "бешенство", "приют"],
+                questions: ["Какие животные и где?", "Агрессивны ли они?", "Есть ли угроза людям?"],
+                description: "Бездомные животные, агрессивные собаки, помощь животным"
+            }
+        };
+
+        // Состояние диалога
+        let userState = {
+            step: 'idle',
+            problemDescription: '',
+            questionsAsked: [],
+            currentQuestionIndex: 0,
+            suggestedCategory: null
+        };
+
+        // Добавление сообщения в чат
+        function addMessage(text, isUser = false, isHtml = false) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            if (isHtml) {
+                contentDiv.innerHTML = text;
+            } else {
+                contentDiv.textContent = text;
+            }
+            
+            messageDiv.appendChild(contentDiv);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function addButtons(buttons) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.className = 'options-buttons';
+            
+            buttons.forEach(btn => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = btn.text;
+                button.onclick = btn.action;
+                buttonsContainer.appendChild(button);
+            });
+            
+            contentDiv.appendChild(buttonsContainer);
+            messageDiv.appendChild(contentDiv);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Начать новое обращение
+        function startNewAppeal() {
+            userState = {
+                step: 'describing',
+                problemDescription: '',
+                questionsAsked: [],
+                currentQuestionIndex: 0,
+                suggestedCategory: null
+            };
+            addMessage("Опишите вашу проблему подробно. Чем больше деталей, тем точнее я подберу категорию.", false);
+            addMessage("Например: «Во дворе дома №15 переполнены мусорные контейнеры, мусор не вывозят уже неделю»", false);
+        }
+
+        // Показать все категории
+        function showAllCategories() {
+            let message = "📂 <strong>Все категории обращений в Наш Город:</strong><br><br>";
+            for (const [category, data] of Object.entries(CATEGORIES)) {
+                message += `<strong>• ${category}</strong><br>`;
+                message += `<span style="font-size: 12px; color: #666;">${data.description}</span><br><br>`;
+            }
+            addMessage(message, false, true);
+            
+            addButtons([{ text: "✅ Начать обращение", action: startNewAppeal }]);
+        }
+
+        // Показать примеры
+        function showExamples() {
+            const examples = [
+                "🏚️ ЖКХ: «Холодные батареи в квартире уже 3 дня, температура +16 градусов»",
+                "🚗 Дороги: «На перекрестке улиц Ленина и Советская глубокая яма, опасна для машин»",
+                "🗑️ Мусор: «Контейнерная площадка у дома 10 переполнена, мусор разлетается»",
+                "💡 Освещение: «Не работают 3 фонаря во дворе, темно и страшно ходить вечером»",
+                "🌳 Озеленение: «Сухое дерево у подъезда может упасть на детскую площадку»",
+                "🔊 Шум: «Соседи сверху делают ремонт ночью уже неделю, спать невозможно»"
+            ];
+            
+            let message = "📋 <strong>Примеры правильного описания проблем:</strong><br><br>";
+            examples.forEach(ex => {
+                message += `${ex}<br><br>`;
+            });
+            message += "<em>Попробуйте описать проблему так же подробно!</em>";
+            
+            addMessage(message, false, true);
+            addButtons([{ text: "✅ Начать обращение", action: startNewAppeal }]);
+        }
+
+        // Анализ проблемы и подбор категории
+        function analyzeProblem(description) {
+            const descriptionLower = description.toLowerCase();
+            let scores = {};
+            
+            for (const [category, data] of Object.entries(CATEGORIES)) {
+                let score = 0;
+                for (const keyword of data.keywords) {
+                    if (descriptionLower.includes(keyword)) {
+                        score += 1;
+                        // Бонус за множественные совпадения
+                        const matches = (descriptionLower.match(new RegExp(keyword, 'g')) || []).length;
+                        score += matches * 0.5;
+                    }
+                }
+                if (score > 0) {
+                    scores[category] = score;
+                }
+            }
+            
+            if (Object.keys(scores).length === 0) {
+                return null;
+            }
+            
+            // Сортировка по убыванию
+            const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+            return sorted[0][0];
+        }
+
+        // Задать уточняющие вопросы
+        function askClarifyingQuestions(category) {
+            const questions = CATEGORIES[category].questions;
+            if (questions.length > 0) {
+                userState.currentQuestionIndex = 0;
+                userState.questionsAsked = [];
+                askNextQuestion();
+            } else {
+                showRecommendation(category);
+            }
+        }
+
+        function askNextQuestion() {
+            const category = userState.suggestedCategory;
+            const questions = CATEGORIES[category].questions;
+            
+            if (userState.currentQuestionIndex < questions.length) {
+                addMessage(questions[userState.currentQuestionIndex], false);
+                userState.step = 'answering_questions';
+            } else {
+                showRecommendation(category);
+            }
+        }
+
+        function showRecommendation(category) {
+            const categoryData = CATEGORIES[category];
+            const html = `
+                <div class="recommendation">
+                    <div class="recommendation-title">✅ Рекомендованная категория:</div>
+                    <strong>${category}</strong><br>
+                    <em>${categoryData.description}</em><br><br>
+                    <strong>Почему эта категория?</strong><br>
+                    Ваша проблема соответствует признакам: ${categoryData.keywords.slice(0, 4).join(', ')}<br><br>
+                    <button class="option-btn" onclick="confirmCategory('${category}')">👍 Подтвердить</button>
+                    <button class="option-btn" onclick="showOtherOptions()">🔄 Другие варианты</button>
+                    <button class="option-btn" onclick="startNewAppeal()">📝 Новое обращение</button>
+                </div>
+            `;
+            addMessage(html, false, true);
+            userState.step = 'recommended';
+        }
+
+        function confirmCategory(category) {
+            addMessage(`Отлично! Вы выбрали категорию: ${category}`, false);
+            addMessage(`
+                <div class="recommendation" style="background: #e3f2fd; border-left-color: #2196f3;">
+                    <strong>📝 Что делать дальше:</strong><br><br>
+                    1. Перейдите на портал "Наш город"<br>
+                    2. Выберите категорию "${category}"<br>
+                    3. Приложите фото проблемы<br>
+                    4. Укажите точный адрес<br>
+                    5. Опишите проблему подробно<br><br>
+                    <strong>Ваше обращение будет рассмотрено в течение 24 часов!</strong>
+                </div>
+            `, false, true);
+            
+            addButtons([
+                { text: "📝 Создать новое обращение", action: startNewAppeal },
+                { text: "📂 Все категории", action: showAllCategories }
+            ]);
+        }
+
+        function showOtherOptions() {
+            let message = "📂 <strong>Другие возможные категории:</strong><br><br>";
+            const descriptionLower = userState.problemDescription.toLowerCase();
+            let allScores = {};
+            
+            for (const [category, data] of Object.entries(CATEGORIES)) {
+                let score = 0;
+                for (const keyword of data.keywords) {
+                    if (descriptionLower.includes(keyword)) {
+                        score += 1;
+                    }
+                }
+                if (score > 0) {
+                    allScores[category] = score;
+                }
+            }
+            
+            const sorted = Object.entries(allScores).sort((a, b) => b[1] - a[1]);
+            
+            sorted.slice(0, 5).forEach(([cat, score]) => {
+                if (cat !== userState.suggestedCategory) {
+                    message += `
+                        <div class="category-card" onclick="selectAlternativeCategory('${cat}')">
+                            <div class="category-name">${cat}</div>
+                            <div class="category-desc">${CATEGORIES[cat].description}</div>
+                        </div>
+                    `;
+                }
+            });
+            
+            addMessage(message, false, true);
+        }
+
+        function selectAlternativeCategory(category) {
+            addMessage(`Вы выбрали категорию: ${category}`, false);
+            confirmCategory(category);
+        }
+
+        // Основная логика обработки сообщений
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            
+            if (!text) return;
+            
+            addMessage(text, true);
+            input.value = '';
+            
+            // Обработка команд
+            if (text.toLowerCase() === '/start') {
+                const startHtml = `
+                    👋 Снова здравствуйте!<br><br>
+                    Я готов помочь вам с выбором категории для обращения.<br>
+                    <div class="options-buttons" style="margin-top: 10px;">
+                        <button class="option-btn" onclick="startNewAppeal()">✅ Начать обращение</button>
+                        <button class="option-btn" onclick="showAllCategories()">📂 Все категории</button>
+                    </div>
+                `;
+                addMessage(startHtml, false, true);
+                userState.step = 'idle';
+                return;
+            }
+            
+            // Логика по шагам
+            if (userState.step === 'describing') {
+                userState.problemDescription = text;
+                addMessage("Анализирую вашу проблему...", false);
+                
+                setTimeout(() => {
+                    const suggested = analyzeProblem(text);
+                    
+                    if (suggested) {
+                        userState.suggestedCategory = suggested;
+                        addMessage(`По вашему описанию подходит категория: <strong>${suggested}</strong>`, false, true);
+                        addMessage("Чтобы убедиться в правильности выбора, задам несколько вопросов:", false);
+                        askClarifyingQuestions(suggested);
+                    } else {
+                        addMessage("Не могу точно определить категорию. Опишите проблему подробнее или выберите категорию из списка:", false);
+                        showAllCategories();
+                        userState.step = 'idle';
+                    }
+                }, 500);
+            } 
+            else if (userState.step === 'answering_questions') {
+                userState.questionsAsked.push(text);
+                userState.currentQuestionIndex++;
+                askNextQuestion();
+            }
+            else {
+                addMessage("Пожалуйста, начните новое обращение с помощью кнопки ниже:", false);
+                addButtons([{ text: "✅ Начать обращение", action: startNewAppeal }]);
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Инициализация
+        console.log("Бот-помощник по категориям 'Наш город' готов!");
+    </script>
+</body>
+</html>
